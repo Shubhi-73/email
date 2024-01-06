@@ -6,14 +6,16 @@ const mongoose = require("mongoose");
 const app = express();
 const nodemailer = require("nodemailer")
 const {google} = require("googleapis")
+require('dotenv').config();
+
 //const cron = require('node-cron');
 
 //const JSONStream = require('JSONStream');
 
-const CLIENT_ID = "226419603487-b7cp7tgrffkiqbv1i288m2sge8666qt9.apps.googleusercontent.com"
-const CLIENT_SECRET= "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"
-const REDIRECT_URI = "https://developers.google.com/oauthplayground"
-const REFRESH_TOKEN = "1//04UO0wRY0pgmMCgYIARAAGAQSNwF-L9IrKmpF1eWqn5bgf6oizEzmdYH2fv0IgdyI6mncOobp2H8LBH9mZIKyIobGmiwo-ntp2Zw"
+const CLIENT_ID = process.env.CLIENT_ID;     
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const REDIRECT_URI = process.env.REDIRECT_URI;
+const REFRESH_TOKEN = process.env.REFRESH_TOKEN;
 
 ////////////////////////////////////////////////////////////////
 
@@ -26,20 +28,10 @@ const oAuth2Client = new google.auth.OAuth2(
 oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 
 //establishing a connection to the mongoDB database
-
-
-mongoose.connect("mongodb+srv://srivastavasnigdha519:mjQnzizxDENnZQ8G@readone.ewtbxdf.mongodb.net/ReadwiseDB?retryWrites=true&w=majority", {
-  useNewUrlParser: true
-});
-
-// mongoose.connect("mongodb+srv://srivastavasnigdha519:mjQnzizxDENnZQ8G@ac-qbvl6nx-shard-00-00.ewtbxdf.mongodb.net:27017,ac-qbvl6nx-shard-00-01.ewtbxdf.mongodb.net:27017,ac-qbvl6nx-shard-00-02.ewtbxdf.mongodb.net:27017/test?retryWrites=true&w=majority", {
-//   useNewUrlParser: true
-// });
-
-// mongoose.connect("mongodb://localhost:27017/ReadwiseDB", {
-//   useNewUrlParser: true
-// });
-//
+mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true
+  });
+  
 
 //defining schemas
 const userSchema = {
@@ -98,10 +90,8 @@ async function getUser(userName){
 
        
 function saveQuote(foundNote,userName){   
-        let currentDate = new Date().toJSON().slice(0, 10);
-        console.log(currentDate); // "2022-06-17"
-        console.log(userName);
-        console.log(foundNote[0].book);
+        let currentDate = new Date().toJSON().slice(0, 10); // "2022-06-17"
+
         //saving today's quote
         const newQuote = new Quote({
             user: foundNote[0].user,
