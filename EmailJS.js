@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const app = express();
 const nodemailer = require("nodemailer")
 const {google} = require("googleapis")
+const axios = require('axios');
 require('dotenv').config();
 
 //const JSONStream = require('JSONStream');
@@ -89,7 +90,7 @@ async function UsersList(){
 async function getUser(userName){
     try{
         const mailId = await User.find({email: userName},{emailId: 1}) //find the mailID of the user
-        return mailId;
+        return mailId[0].emailId;
     }
     catch(err){
         console.log(err);
@@ -167,43 +168,78 @@ async function sendMail(mailId,foundNote)
             }
           } //sendMail()
           
-app.get('/run', async (req, res) => 
-{
-
-
-            //getting list of users
-            const userList = await UsersList();
-            console.log(userList);
-
-
-            //iterating through each user 
-            for(let i = 0; i<userList.length; i++)
-            {
-
-              let userName = userList[i];
-              console.log("userName"+userName);
-              let userEmail = await getUser(userName);
+          app.get('/run', async (req, res) => {
+            try {
+                //getting list of users
+                const userList = await UsersList();
+                console.log(userList);
         
-              //finding one random document
-              let foundNote = await Note.aggregate([{$match: {user:userName}},{$sample: {size: 1}}])
-              console.log("NOTE FOUND"+ foundNote);
+                //iterating through each user 
+                for (let i = 0; i < userList.length; i++) {
+        
+                    let userName = userList[i];
+                    console.log("userName" + userName);
+                    let userEmail = await getUser(userName);
+                    console.log("USEREMIALLLLL")
+                    console.log(userEmail)
 
 
-              //saving today's quote in a new collection for home to render
-              saveQuote(foundNote,userName);
+                    //finding one random document
+                    let foundNote = await Note.aggregate([{ $match: { user: userName } }, { $sample: { size: 1 } }]);
+                    console.log("NOTE FOUND")
+                    console.log(foundNote[0].book);
+                    var EmailJSbook = foundNote[0].book;
+                    var EmailJScontent = foundNote[0].content;
         
-              //send mail to that user
-              sendMail(userEmail,foundNote) //returns a promise
-              .then((result) => console.log('Email sent...', result)) //consuming function
-              .catch((error) => console.log(error.message));
-            
-            }
-
-            res.status(200).json({message: "mail sent!"});
+                    //saving today's quote in a new collection for home to render
+                    saveQuote(foundNote, userName);
         
+                    //send mail to that user
+                    var data = {
+                        service_id: 'service_u3rmrwe',
+                        template_id: 'template_vpsvuti',
+                        user_id: 'pEezx_ogYFas2eCoe',
+                        template_params: {
+                            to_name: userName,
+                            book_title: EmailJSbook,
+                            note: EmailJScontent,
+                            to_email: userEmail,
+                        }
+                    };
         
-       
-});
+                    const response = await axios.post('https://api.emailjs.com/api/v1.0/email/send', data, {
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    console.log("THIS IS THE RESPONSE")
+                    console.log(response);
+                }
+                // You can send a success response back to the client
+                res.send('Your mail is sent!');
+            } catch (error) {
+                console.error(error);
+                res.status(500).send('An error occurred while processing your request.');
+      
+                  
+                // } catch (error) {
+                //     // Handle error if request fails
+                
+                //     res.status(400).json({ error: 'Oops... Something went wrong.' });
+                // }
+          
+          
+                        // sendMail(userEmail,foundNote) //returns a promise
+                        // .then((result) => console.log('Email sent...', result)) //consuming function
+                        // .catch((error) => console.log(error.message));
+                      
+                 
+          
+                    
+                    }     
+                  
+                 
+          });
    
 app.listen(4000, () => {
   console.log(`Server is running on port 4000.`);
