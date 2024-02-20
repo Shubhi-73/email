@@ -2,7 +2,7 @@
 
   "scripts": {
 
-    "start": "node email.js",
+    "start": "node EmailJS.js",
 
     "build": "npm i"
 
