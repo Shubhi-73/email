@@ -142,7 +142,7 @@ function saveQuote(foundNote,userName){
           };
 
           // Schedule the task to run at 7 am every day
-    cron.schedule('15 22 * * *', async () => 
+    cron.schedule('0 7 * * *', async () => 
     {
         try {
             await task();
