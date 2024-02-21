@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const app = express();
 const nodemailer = require("nodemailer");
 const axios = require('axios');
+const cron = require('node-cron');
 require('dotenv').config();
 
 //establishing a connection to the mongoDB database
@@ -86,7 +87,7 @@ function saveQuote(foundNote,userName){
    }
            
           
-          app.get('/run', async (req, res) => {
+            const task = async() => {
             try {
                 //getting list of users
                 const userList = await UsersList();
@@ -132,15 +133,29 @@ function saveQuote(foundNote,userName){
                     });
                  
                 }
-                // You can send a success response back to the client
-                res.send('Your mail is sent!');
+            
             } catch (error) {
-                console.error(error);
-                res.status(500).send('An error occurred while processing your request.');
+                console.error(error);  
                  }     
              
                  
-          });
+          };
+
+          // Schedule the task to run at 7 am every day
+    cron.schedule('15 22 * * *', async () => 
+    {
+        try {
+            await task();
+        } catch (error) {
+            console.error('Error occurred:', error);
+        }
+    },
+    {
+        scheduled: true,
+        timezone: "Asia/Kolkata"
+    }
+
+);
    
 app.listen(4000, () => {
   console.log(`Server is running on port 4000.`);
